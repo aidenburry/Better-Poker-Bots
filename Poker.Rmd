@@ -1,0 +1,474 @@
+---
+title: "Poker Game"
+output: html_document
+date: "2024-05-10"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Draw Player Cards
+
+
+```{r}
+library(purrr)
+Get.Player.Cards = function(Deck = Deck){
+  
+  Player.Card.1 = Deck[rdunif(1, a = 1, b = length(Deck))] 
+  Deck = Deck[Deck != Player.Card.1]
+  Player.Card.2 = Deck[rdunif(1, a = 1, b = length(Deck))]
+  Deck = Deck[Deck != Player.Card.2]
+  
+  return(c(Player.Card.1,Player.Card.2,Deck))
+  
+}
+```
+
+
+# Get a Flop
+
+
+```{r}
+Get.Flop = function(Deck){
+  
+  Flop.1 = Deck[rdunif(1, a = 1, b = length(Deck))]
+  Deck =  Deck = Deck[Deck != Flop.1]
+  Flop.2 = Deck[rdunif(1, a = 1, b = length(Deck))]
+  Deck = Deck[Deck != Flop.2]
+  Flop.3 = Deck[rdunif(1, a = 1, b = length(Deck))]
+  Deck = Deck[Deck != Flop.3]
+  
+  return(c(Flop.1,Flop.2,Flop.3,Deck))
+}
+```
+
+
+# Check For a Straight
+
+
+```{r}
+Check.Straight = function(Ranks){
+  Backup.Ranks = unique(Ranks)
+  Ranks = unique(Ranks)
+  Ranks[which(Ranks == 'A')] = 14
+  Ranks[which(Ranks == 'K')] = 13
+  Ranks[which(Ranks == 'Q')] = 12
+  Ranks[which(Ranks == 'J')] = 11
+  Ranks[which(Ranks == 'T')] = 10
+
+
+  Ranks = as.numeric(Ranks)
+  Ranks = sort(Ranks)
+  
+  if(length(Ranks) < 5){
+    return(FALSE)
+  }
+  
+  # 5 distinct
+  
+  if(length(Ranks) == 5){
+    if(all(diff(Ranks[1:5]) == 1)){
+      return(TRUE)
+    }
+  }
+    
+  # 6 distinct
+  
+   if(length(Ranks) == 6){
+     if(all(diff(Ranks[1:5]) == 1) | all(diff(Ranks[2:6]) == 1)){
+       return(TRUE)
+    }
+   } 
+  
+  # 7 distinct
+  
+   if(length(Ranks) == 7){
+     if(all(diff(Ranks[1:5]) == 1) | all(diff(Ranks[2:6]) == 1) | all(diff(Ranks[3:7]) == 1)){
+       return(TRUE)
+    }
+  } 
+  
+  
+   
+  Ranks = Backup.Ranks   
+  Ranks[which(Ranks == 'A')] = 1
+  Ranks[which(Ranks == 'K')] = 13
+  Ranks[which(Ranks == 'Q')] = 12
+  Ranks[which(Ranks == 'J')] = 11
+  Ranks[which(Ranks == 'T')] = 10
+
+
+  Ranks = as.numeric(Ranks)
+  Ranks = sort(Ranks)
+  
+  # 5 distinct
+  
+  if(length(Ranks) == 5){
+    if(all(diff(Ranks[1:5]) == 1)){
+      return(TRUE)
+    }
+  }
+    
+  # 6 distinct
+  
+   if(length(Ranks) == 6){
+     if(all(diff(Ranks[1:5]) == 1) | all(diff(Ranks[2:6]) == 1)){
+       return(TRUE)
+    }
+   } 
+  
+  # 7 distinct
+  
+   if(length(Ranks) == 7){
+     if(all(diff(Ranks[1:5]) == 1) | all(diff(Ranks[2:6]) == 1) | all(diff(Ranks[3:7]) == 1)){
+       return(TRUE)
+    }
+   }
+  
+   return(FALSE) 
+    
+}
+  
+
+```
+
+
+
+
+
+# Check for a Flush 
+
+```{r}
+Check.Flush = function(Suits){
+
+  if(max(Suits) >= 5){
+    return(TRUE)
+  }
+  
+  return(FALSE)
+
+}
+```
+
+
+# Check for a Straight Flush 
+
+
+
+```{r}
+Check.Straight.Flush = function(Ranks,Suits){
+  Backup.Ranks = Ranks
+  Ranks[which(Ranks == 'A')] = 14
+  Ranks[which(Ranks == 'K')] = 13
+  Ranks[which(Ranks == 'Q')] = 12
+  Ranks[which(Ranks == 'J')] = 11
+  Ranks[which(Ranks == 'T')] = 10
+  
+  
+  Cards = c(paste(Ranks,Suits,sep = ''))
+  numeric = as.numeric(sub("[^0-9]", "", Cards))
+  Cards = Cards[order(numeric)]
+  
+  
+  Ranks = c()
+  for (i in 1:length(Cards)) {
+    Rank = substr(Cards[i], start = 0, stop =  nchar(Cards[i])-1)  
+    Ranks[i] = Rank
+  }
+  Ranks = as.numeric(Ranks)
+
+  
+  Suits = c()
+  for (i in 1:length(Cards)) {
+    Suit = substr(Cards[i], start = nchar(Cards[i]), stop = nchar(Cards[i]))  
+    Suits[i] = Suit
+  }
+  
+
+  
+  if(
+    (all(diff(Ranks[1:5]) == 1) & length(unique(Suits[1:5])) == 1) | 
+     (all(diff(Ranks[2:6]) == 1) & length(unique(Suits[2:6])) == 1)|
+      (all(diff(Ranks[3:7]) == 1) & length(unique(Suits[3:7])) == 1)
+    ){
+       return(TRUE)
+  }
+  
+  
+   
+  Ranks = Backup.Ranks   
+  Ranks[which(Ranks == 'A')] = 1
+  Ranks[which(Ranks == 'K')] = 13
+  Ranks[which(Ranks == 'Q')] = 12
+  Ranks[which(Ranks == 'J')] = 11
+  Ranks[which(Ranks == 'T')] = 10
+
+
+  Cards = c(paste(Ranks,Suits,sep = ''))
+  numeric = as.numeric(sub("[^0-9]", "", Cards))
+  Cards = Cards[order(numeric)]
+  
+  
+  Ranks = c()
+  for (i in 1:length(Cards)) {
+    Rank = substr(Cards[i], start = 0, stop =  nchar(Cards)-1)  
+    Ranks[i] = Rank
+  }
+  
+  Ranks = as.numeric(Ranks)
+
+  
+  Suits = c()
+  for (i in 1:length(Cards)) {
+    Suit = substr(Cards[i], start = nchar(Cards), stop = nchar(Cards))  
+    Suits[i] = Suit
+  }
+  
+  
+  
+  if(
+    (all(diff(Ranks[1:5]) == 1) & length(unique(Suits[1:5])) == 1) | 
+     (all(diff(Ranks[2:6]) == 1) & length(unique(Suits[2:6])) == 1)|
+      (all(diff(Ranks[3:7]) == 1) & length(unique(Suits[3:7])) == 1)
+    ){
+       return(TRUE)
+  }
+  
+  
+   return(FALSE) 
+    
+}
+```
+
+
+# Check Royal Flush
+
+
+```{r}
+Check.Royal.Flush = function(Ranks,Suits){
+  Ranks[which(Ranks == 'A')] = 14
+  Ranks[which(Ranks == 'K')] = 13
+  Ranks[which(Ranks == 'Q')] = 12
+  Ranks[which(Ranks == 'J')] = 11
+  Ranks[which(Ranks == 'T')] = 10
+  
+  
+  Cards = c(paste(Ranks,Suits,sep = ''))
+  numeric = as.numeric(sub("[^0-9]", "", Cards))
+  Cards = Cards[order(numeric)]
+  
+  
+  Ranks = c()
+  for (i in 1:length(Cards)) {
+    Rank = substr(Cards[i], start = 0, stop =  nchar(Cards[i])-1)  
+    Ranks[i] = Rank
+  }
+  Ranks = as.numeric(Ranks)
+
+  
+  Suits = c()
+  for (i in 1:length(Cards)) {
+    Suit = substr(Cards[i], start = nchar(Cards[i]), stop = nchar(Cards[i]))  
+    Suits[i] = Suit
+  }
+  
+
+  
+  if(
+    (all(diff(Ranks[1:5]) == 1) & length(unique(Suits[1:5])) == 1 & 14 %in% Ranks[1:5]) | 
+     (all(diff(Ranks[2:6]) == 1) & length(unique(Suits[2:6])) == 1 & 14 %in% Ranks[2:6])|
+      (all(diff(Ranks[3:7]) == 1) & length(unique(Suits[3:7])) == 1 & 14 %in% Ranks[3:7])
+    ){
+       return(TRUE)
+  }
+  
+  
+   return(FALSE) 
+    
+}
+```
+
+
+# Check Hands
+
+```{r}
+Get.Strength = function(Ranks, Suits){
+  
+  Rank.Counts = table(Ranks)
+  Pairs = Rank.Counts[Rank.Counts>1]
+  
+  
+  Suit.Counts = table(Suits)
+  Suit.Counts = Suit.Counts[Suit.Counts>1]
+  
+  
+  if(Check.Royal.Flush(Ranks,Suits) == TRUE){
+    return('Royal Flush')
+  }
+  
+  
+  if(Check.Straight.Flush(Ranks,Suits) == TRUE){
+    return('Straight Flush')
+  }
+  
+  
+  if(max(Pairs) == 4){
+    return('4 of a kind')
+  }
+  
+  if(max(Pairs) == 3 & length(Pairs) > 1){
+    return('Full House')
+  }
+  
+  if(Check.Flush(Suit.Counts) == T){
+    return('Flush')
+  }
+  
+  
+  if(Check.Straight(Ranks) == TRUE){
+    return('Straight')
+  }
+  
+  if(max(Pairs) == 3 & length(Pairs) == 1){
+    return('Three Of a Kind')
+  }
+  
+  if(max(Pairs) == 2 & length(Pairs) > 1){
+    return('Two Pairs')
+  }
+  
+  if(max(Pairs) == 2 & length(Pairs) == 1){
+    return('One Pair')
+  }
+  
+  if(length(Pairs) == 0){
+    return('High Card')
+  }
+  
+
+}
+
+```
+
+
+
+# Game
+
+```{r}
+Poker = function(){ 
+  Deck = c('AS','AC', 'AD', 'AH',
+           '2S','2C', '2D', '2H',
+           '3S','3C', '3D', '3H',
+           '4S','4C', '4D', '4H',
+           '5S','5C', '5D', '5H',
+           '6S','6C', '6D', '6H',
+           '7S','7C', '7D', '7H',
+           '8S','8C', '8D', '8H',
+           '9S','9C', '9D', '9H',
+           'TS','TC', 'TD', 'TH',
+           'JS','JC', 'JD', 'JH',
+           'QS','QC', 'QD', 'QH',
+           'KS','KC', 'KD', 'KH')
+  
+  
+  Player.Stuff = Get.Player.Cards(Deck)
+  Deck = Player.Stuff[3:length(Player.Stuff)]
+  Player.Cards = c(Player.Stuff[1],Player.Stuff[2])
+
+  
+  print(Player.Cards)
+  
+  menu(c("Check", "Raise", "Fold"), title="What do you want to do? ")
+  
+  
+  readline("What is the value of x?")
+  
+  Flop.Stuff = Get.Flop(Deck)
+  Deck = Flop.Stuff[4:length(Flop.Stuff)]
+  Flop = c(Flop.Stuff[1],Flop.Stuff[2],Flop.Stuff[3])
+
+  
+  Turn = Deck[rdunif(1, a = 1, b = length(Deck))]
+  Deck = Deck[Deck != Turn]
+  
+  River = Deck[rdunif(1, a = 1, b = length(Deck))]
+  Deck = Deck[Deck != River]
+  
+  
+  
+  
+  Board = c(Flop, Turn, River)
+  
+  print(Board) 
+  
+  Final.Assembly = c(Player.Cards, Board)
+  
+  
+  Ranks = c()
+  for (i in 1:length(Final.Assembly)) {
+    Rank = substr(Final.Assembly[i], start = 0, stop = 1)  
+    Ranks[i] = Rank
+  }
+  
+
+  
+  Suits = c()
+  for (i in 1:length(Final.Assembly)) {
+    Suit = substr(Final.Assembly[i], start = 2, stop = 2)  
+    Suits[i] = Suit
+  }
+  
+  Strength = suppressWarnings(Get.Strength(Ranks,Suits))
+  
+  return(Strength)
+
+  
+}
+
+
+Ranks = c(9,6,7,'J',8,5,5)
+Suits = c('D','S','S','H','S','C','H')
+
+```
+
+
+
+# checking through on stuff
+
+
+```{r}
+Poker()
+```
+
+
+
+```{r}
+library(ggplot2)
+Outcomes = c()
+for(i in 1:10000){
+  Outcomes[i] = Poker()
+}
+
+data = data.frame('Result' = Outcomes)
+prop.table(table(data))
+ggplot(data = data, aes(x = Result, fill = Result)) + geom_bar(color = 'black') + theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+
+
+```{r}
+Ranks = c('A','A','A','Q','K','J','T')
+Suits = c('H','D','S','S','S','S','S')
+Get.Strength(Ranks,Suits)
+Check.Royal.Flush(Ranks,Suits)
+```
+
+
+
+
+
+
+
